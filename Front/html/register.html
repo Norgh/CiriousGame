@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Register</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+<form id="form">
+    <input autocomplete="off" type="text" id="username" placeholder="Username" required>
+    <input autocomplete="off" type="email" id="email" placeholder="Email" required>
+    <input autocomplete="off" type="password" id="password" placeholder="Password" required>
+    <input autocomplete="off" type="password" id="passwordConf" placeholder="Password Confirmation" required>
+    <input type="submit">
+</form>
+
+<a href="/">Home</a>
+<br>
+<a href="/connection">Connection</a>
+</body>
+<script> let socket = io();</script>
+<script src="../js/register.js"></script>
+<script src="../js/modules/logger.js"></script>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Home</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+<h1>Skyline Runner</h1>
+<p id="welcome">Welcome <span id="username"></span> ! </p>
+<a href="/register" id="reg">Register</a>
+<br>
+<a href="/connection" id="connect">Connection</a>
+<br>
+<a href="/game" id="game">Play</a>
+<br>
+<a href="/logout" id="disconnect">Disconnection</a>
+</body>
+<script>let socket = io()</script>
+<script src="../js/home.js"></script>
+<script src="../js/modules/logger.js"></script>
+</html>
