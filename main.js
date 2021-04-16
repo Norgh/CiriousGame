@@ -124,7 +124,7 @@ app.post('/login', body('login').isLength({min: 3}).trim().escape(), (req, res) 
     } else {
         // Store login
         req.session.username = login;
-        console.log(req.session.username 'just logged in.');
+        console.log(req.session.username, 'just logged in.');
         req.session.save();
         res.redirect('/');
     }
