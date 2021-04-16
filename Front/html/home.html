@@ -9,13 +9,14 @@
 <body>
 <h1>Skyline Runner</h1>
 <p id="welcome">Welcome <span id="username"></span> ! </p>
-<a href="/register" id="reg">Register</a>
-<br>
-<a href="/connection" id="connect">Connection</a>
-<br>
-<a href="/game" id="game">Play</a>
-<br>
-<a href="/logout" id="disconnect">Disconnection</a>
+<ul>
+    <li><a href="/register" id="reg">Register</a></li>
+    <li><a href="/connection" id="connect">Connection</a></li>
+    <li><a href="/logout" id="disconnect">Disconnection</a></li>
+    <li><a href="/game" id="game">Play</a></li>
+    <li><a href="/shop" id="shop">Shop</a></li>
+    <li><a href="/score" id="score">Score</a></li>
+</ul>
 </body>
 <script>let socket = io()</script>
 <script src="../js/home.js"></script>
