@@ -1,0 +1,23 @@
+{
+  "name": "ciriousgame",
+  "version": "1.0.0",
+  "description": "A game for our CIR2 at ISEN end of the year project",
+  "main": "index.js",
+  "dependencies": {
+    "three": "^0.127.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Norgh/CiriousGame.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Norgh/CiriousGame/issues"
+  },
+  "homepage": "https://github.com/Norgh/CiriousGame#readme"
+}
