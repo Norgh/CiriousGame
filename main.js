@@ -87,12 +87,12 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/game', (req, res) => {
-    if (req.session.username){
-        res.sendFile(__dirname + '/Front/Html/game.html');
-    }
+    //if (req.session.username){
+        res.sendFile(__dirname + '/Front/index.html');
+    /*}
     else {
         res.redirect('/');
-    }
+    }*/
 });
 
 app.get('/score', (req, res) => {
