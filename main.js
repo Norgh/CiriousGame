@@ -67,7 +67,7 @@ http.listen(4441, () => {
 
 //Redirect to home.html if the url is "/"
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/Front/Html/home.html');
+    res.sendFile(__dirname + '/Front/Html/connection.html');
     let sessionData = req.session;
 });
 
@@ -87,12 +87,12 @@ app.get('/logout', (req, res) => {
 });
 
 app.get('/game', (req, res) => {
-    //if (req.session.username){
-        res.sendFile(__dirname + '/Front/index.html');
-    /*}
+    if (req.session.username){
+        res.sendFile(__dirname + '/Front/game.html');
+    }
     else {
-        res.redirect('/');
-    }*/
+      res.redirect('/connection.html');
+    }
 });
 
 app.get('/score', (req, res) => {
