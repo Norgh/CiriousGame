@@ -1,4 +1,3 @@
-
 import * as THREE from './three.module.js';
 import {GLTFLoader} from '../loaders/GLTFLoader.js';
 
@@ -13,7 +12,7 @@ import {GLTFLoader} from '../loaders/GLTFLoader.js';
 /**
  * Constants used in this game.
  */
-var Colors = {
+let Colors = {
 	cherry: 0xe35d6a,
 	blue: 0x1560bd,
 	white: 0xd8d0d1,
@@ -27,8 +26,9 @@ var Colors = {
 	brownDark: 0x23190f,
 	green: 0x669900,
 };
-var texture, material, geome;
-var deg2Rad = Math.PI / 180;
+let  pausePersoRoad = 0;
+let texture, material, geome;
+let deg2Rad = Math.PI / 180;
 // Make a new world when the page is loaded.
 window.addEventListener('load', function(){
 	new World();
@@ -258,6 +258,7 @@ function World() {
 			// Check for collisions between the character and objects.
 			if (collisionsDetected()) {
 				gameOver = true;
+				pausePersoRoad = 1;
 				paused = true;
 				document.addEventListener(
         			'keydown',
@@ -482,7 +483,7 @@ function Character() {
 	 */
 	this.update = function() {
 
-		// Obtain the curren time for future calculations.
+		// Obtain the current time for future calculations.
 		var currentTime = new Date() / 1000;
 
 		// Apply actions to the character if none are currently being
@@ -605,7 +606,7 @@ function Tree(x, y, z, s) {
 	this.mesh = new THREE.Object3D();
 	const loader = new GLTFLoader();
 	self.runner = createGroup(0, 0, -25);
-	loader.load('../model/cone.glb', ( gltf ) => {
+	loader.load('../model/hurdle.glb', ( gltf ) => {
 		model = gltf.scene;
 		// model.scale.set(250,250,250);
 		self.mesh.add(model);
@@ -704,20 +705,6 @@ function createGroup(x, y, z) {
  * @return {THREE.Mesh} A box with the specified properties.
  *
  */
-function createBox(dx, dy, dz, color, x, y, z, notFlatShading) {
-    
-	const texture = new THREE.TextureLoader().load('textures/road_course_long_90deg.jpg');
-	texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
-	texture.repeat.set(1, 4);
-	const material = new THREE.MeshLambertMaterial({
-  		map: texture,
-	});
-	let geom = new THREE.BoxGeometry(dx, dy, dz);
-	const road = new THREE.Mesh(geom, material);
-	road.position.set(x, y, z);
-	
-    return road;
-}
 
 /**
  * Creates and returns a (possibly asymmetrical) cyinder with the 
@@ -756,11 +743,6 @@ function setWeight( action, weight ) {
 	action.setEffectiveTimeScale( 1 );
 	action.setEffectiveWeight( weight );
 
-}
-
-function animateGround() {
-    requestAnimationFrame(animate);
-    render();
 }
 
 function animate() {
@@ -811,5 +793,6 @@ function road(){
 
 function animateTexture() {
     requestAnimationFrame(animateTexture);
+	if(pausePersoRoad == 1) texture.offset.y = 0;
     texture.offset.y += .008;
 }
