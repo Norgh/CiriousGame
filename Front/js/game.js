@@ -418,10 +418,13 @@ function Character() {
 	  */
 	function init() {
 		const loader = new GLTFLoader();
-		self.runner = createGroup(0, -420, -25);
+		self.runner = createGroup(0, -420, -25);/*
 		loader.load('../model/model_naruto/naruto_run_anim.glb', ( gltf ) => {
 			model = gltf.scene;
-			model.scale.set(2,2,2);
+			model.scale.set(2,2,2);*/
+		loader.load('../model/playermodel1_no_texture.glb', ( gltf ) => {
+			model = gltf.scene;
+			model.scale.set(500,500,500);
 			self.runner.add(model);
 			model.traverse( function ( object ) {
 
@@ -434,7 +437,7 @@ function Character() {
 			self.runner.add( skeleton );
 
 			const animations = gltf.animations;
-
+			console.log(animations);
 			mixer = new THREE.AnimationMixer( model );
 		/*	Pour quand on rajoutera d'autres animations
 			idleAction = mixer.clipAction( animations[ 1 ] );
