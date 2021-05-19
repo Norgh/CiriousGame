@@ -58,7 +58,7 @@ if (app.get('env') === 'production') {
 }
 
 //Server listening on port 4442
-http.listen(4441, () => {
+http.listen(4443, () => {
     console.log('Server launched on port 4441');
 });
 
@@ -69,11 +69,6 @@ http.listen(4441, () => {
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/Front/Html/home.html');
     let sessionData = req.session;
-});
-
-//Redirect to home.html if the url is "/home"
-app.get('/home', (req, res) => {
-    res.sendFile(__dirname + '/Front/Html/home.html');
 });
 
 //Redirect to register.html if the url is "/register"
@@ -105,8 +100,12 @@ app.get('/score', (req, res) => {
         res.sendFile(__dirname + '/Front/Html/score.html');
     }
     else {
-        res.redirect('/connection');
+        res.redirect('/');
     }
+});
+
+app.get('/rules', (req, res) => {
+    res.sendFile(__dirname + '/Front/Html/rules.html');
 });
 
 app.get('/shop', (req, res) => {
@@ -114,7 +113,7 @@ app.get('/shop', (req, res) => {
         res.sendFile(__dirname + '/Front/Html/shop.html');
     }
     else {
-        res.redirect('/connection');
+        res.redirect('/');
     }
 });
 
@@ -131,7 +130,7 @@ app.post('/login', body('login').isLength({min: 3}).trim().escape(), (req, res) 
         req.session.username = login;
         console.log(req.session.username, 'just logged in.');
         req.session.save();
-        res.redirect('/home');
+        res.redirect('/');
     }
 });
 
