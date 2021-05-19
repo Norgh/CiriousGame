@@ -67,8 +67,13 @@ http.listen(4441, () => {
 
 //Redirect to home.html if the url is "/"
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/Front/Html/connection.html');
+    res.sendFile(__dirname + '/Front/Html/home.html');
     let sessionData = req.session;
+});
+
+//Redirect to home.html if the url is "/home"
+app.get('/home', (req, res) => {
+    res.sendFile(__dirname + '/Front/Html/home.html');
 });
 
 //Redirect to register.html if the url is "/register"
@@ -91,7 +96,7 @@ app.get('/game', (req, res) => {
         res.sendFile(__dirname + '/Front/game.html');
     }
     else {
-      res.redirect('/connection.html');
+      res.redirect('/connection');
     }
 });
 
@@ -100,7 +105,7 @@ app.get('/score', (req, res) => {
         res.sendFile(__dirname + '/Front/Html/score.html');
     }
     else {
-        res.redirect('/');
+        res.redirect('/connection');
     }
 });
 
@@ -109,7 +114,7 @@ app.get('/shop', (req, res) => {
         res.sendFile(__dirname + '/Front/Html/shop.html');
     }
     else {
-        res.redirect('/');
+        res.redirect('/connection');
     }
 });
 
@@ -126,7 +131,7 @@ app.post('/login', body('login').isLength({min: 3}).trim().escape(), (req, res) 
         req.session.username = login;
         console.log(req.session.username, 'just logged in.');
         req.session.save();
-        res.redirect('/');
+        res.redirect('/home');
     }
 });
 

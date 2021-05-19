@@ -27,7 +27,7 @@ var Colors = {
 	brownDark: 0x23190f,
 	green: 0x669900,
 };
-
+var texture, material, geome;
 var deg2Rad = Math.PI / 180;
 // Make a new world when the page is loaded.
 window.addEventListener('load', function(){
@@ -108,8 +108,9 @@ function World() {
 		// character.element.position.z = 100; // à fix plus tard
 		scene.add(character.element);
 
-		var ground = createBox(3000, 20, 120000, Colors.sand, 0, -400, -60000);
-		scene.add(ground);
+		// var ground = createBox(3000, 20, 120000, Colors.sand, 0, -400, -60000);
+		var ground = new road();
+		scene.add(ground.element);
 
 		objects = [];
 		treePresenceProb = 0.2;
@@ -705,14 +706,16 @@ function createGroup(x, y, z) {
  */
 function createBox(dx, dy, dz, color, x, y, z, notFlatShading) {
     
-	const loader = new THREE.TextureLoader().load('textures/road_long_90deg.jpg');
-	// loader.repeat.set(1,10)
-	const material = new THREE.MeshBasicMaterial({
-  		map: loader,
+	const texture = new THREE.TextureLoader().load('textures/road_course_long_90deg.jpg');
+	texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+	texture.repeat.set(1, 4);
+	const material = new THREE.MeshLambertMaterial({
+  		map: texture,
 	});
 	let geom = new THREE.BoxGeometry(dx, dy, dz);
 	const road = new THREE.Mesh(geom, material);
 	road.position.set(x, y, z);
+	
     return road;
 }
 
@@ -731,20 +734,7 @@ function createBox(dx, dy, dz, color, x, y, z, notFlatShading) {
  * @param {number} Z The z-coordinate of the center of the cylinder.
  * @return {THREE.Mesh} A box with the specified properties.
  */
-function createCylinder(radiusTop, radiusBottom, height, radialSegments, 
-						color, x, y, z) {
-    var geom = new THREE.CylinderGeometry(
-    	radiusTop, radiusBottom, height, radialSegments);
-    var mat = new THREE.MeshPhongMaterial({
-    	color: color,
-    	flatShading: true
-    });
-    var cylinder = new THREE.Mesh(geom, mat);
-    cylinder.castShadow = true;
-    cylinder.receiveShadow = true;
-    cylinder.position.set(x, y, z);
-    return cylinder;
-}
+
 
 function activateAllActions() {
 /*
@@ -768,6 +758,11 @@ function setWeight( action, weight ) {
 
 }
 
+function animateGround() {
+    requestAnimationFrame(animate);
+    render();
+}
+
 function animate() {
 
 	// Render loop
@@ -785,4 +780,36 @@ function animate() {
 	// Update the animation mixer, the stats panel, and render this frame
 
 	mixer.update( mixerUpdateDelta );
+}
+
+function road(){
+	var self = this;
+	init();
+	animateTexture();
+
+	function init() {
+	 // Create the floor geometry
+	 let geom = new THREE.BoxGeometry(3000, 20, 120000);
+	 // geom.element.position.y = 0;
+	  // Load the texture and assign it to the material
+	  THREE.ImageUtils.crossOrigin = '';
+	  texture = new THREE.TextureLoader().load('./textures/road.jpg');
+	  texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+	  texture.repeat.set(1, 10);
+  
+	  material = new THREE.MeshLambertMaterial({
+		map: texture
+	  });
+  
+	  // Create the mesh for the floor and add it to the scene
+	  
+	  self.geome = new THREE.Mesh(geom, material);
+	  self.element = createGroup(0, -370, -4000);
+		self.element.add(self.geome);
+	}
+}
+
+function animateTexture() {
+    requestAnimationFrame(animateTexture);
+    texture.offset.y += .008;
 }
