@@ -59,7 +59,7 @@ if (app.get('env') === 'production') {
 
 //Server listening on port 4442
 http.listen(4443, () => {
-    console.log('Server launched on port 4441');
+    console.log('Server launched on port 4443');
 });
 
 /******* ROUTES *******/

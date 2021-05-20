@@ -1,17 +1,6 @@
 import * as THREE from './three.module.js';
 import {GLTFLoader} from '../loaders/GLTFLoader.js';
 
-/**
- *
- * BOXY RUN
- * ----
- * Simple Temple-Run-esque game, created with love by Wan Fung Chui.
- *
- */
-
-/**
- * Constants used in this game.
- */
 let Colors = {
 	cherry: 0xe35d6a,
 	blue: 0x1560bd,
@@ -34,19 +23,6 @@ window.addEventListener('load', function(){
 	new World();
 });
 
-/** 
- *
- * THE WORLD
- * 
- * The world in which Boxy Run takes place.
- *
- */
-
-/** 
-  * A class of which the world is an instance. Initializes the game
-  * and contains the main game loop.
-  *
-  */
 let model, skeleton, mixer, clock;
 let idleAction, walkAction, runAction;
 let idleWeight, walkWeight, runWeight;
@@ -116,7 +92,7 @@ function World() {
 		treePresenceProb = 0.2;
 		maxTreeSize = 0.5;
 		for (var i = 10; i < 40; i++) {
-			createRowOfTrees(i * -3000, treePresenceProb, 0.5, maxTreeSize);
+			createRowOfTrees(i * -3000, treePresenceProb);
 		}
 
 		// The game is paused to begin with and the game is not over.
@@ -137,7 +113,7 @@ function World() {
 					var key = e.keyCode;
 					if (keysAllowed[key] === false) return;
 					keysAllowed[key] = false;
-					if (paused && !collisionsDetected() && key > 18) {
+					if (paused && !collisionMortelle() && key > 18) {
 						paused = false;
 						character.onUnpause();
 						document.getElementById(
@@ -238,7 +214,7 @@ function World() {
 				} else if (difficulty >= 8 * levelLength && difficulty < 9 * levelLength) {
 					fogDistance -= (5000 / levelLength);
 				}
-				createRowOfTrees(-120000, treePresenceProb, 0.5, maxTreeSize);
+				createRowOfTrees(-120000, treePresenceProb);
 				scene.fog.far = fogDistance;
 			}
 
@@ -256,7 +232,7 @@ function World() {
 			character.update();
 
 			// Check for collisions between the character and objects.
-			if (collisionsDetected()) {
+			if (collisionMortelle()) {
 				gameOver = true;
 				pausePersoRoad = 1;
 				paused = true;
@@ -337,62 +313,48 @@ function World() {
 		camera.updateProjectionMatrix();
 	}
 
-	/**
-	 * Creates and returns a row of trees according to the specifications.
-	 *
-	 * @param {number} POSITION The z-position of the row of trees.
- 	 * @param {number} PROBABILITY The probability that a given lane in the row
- 	 *                             has a tree.
- 	 * @param {number} MINSCALE The minimum size of the trees. The trees have a 
- 	 *							uniformly distributed size from minScale to maxScale.
- 	 * @param {number} MAXSCALE The maximum size of the trees.
- 	 *
-	 */
-	function createRowOfTrees(position, probability, minScale, maxScale) {
+	function createRowOfTrees(position, probability) {
 		for (var lane = -1; lane < 2; lane++) {
 			var randomNumber = Math.random();
 			if (randomNumber < probability) {
-				var scale = minScale + (maxScale - minScale) * Math.random();
-				var tree = new Tree(lane * 800, -400, position, scale);
-				objects.push(tree);
-				scene.add(tree.mesh);
+				var obstacle = new Obstacle(lane * 800, -400, position);
+				objects.push(obstacle);
+				scene.add(obstacle.mesh);
 			}
 		}
 	}
 
-	/**
-	 * Returns true if and only if the character is currently colliding with
-	 * an object on the map.
-	 */
- 	function collisionsDetected() {
+ 	function collisionMortelle() {
  		var charMinX = character.element.position.x - 115;
  		var charMaxX = character.element.position.x + 115;
  		var charMinY = character.element.position.y - 310;
  		var charMaxY = character.element.position.y + 320;
  		var charMinZ = character.element.position.z - 40;
  		var charMaxZ = character.element.position.z + 40;
+		
  		for (var i = 0; i < objects.length; i++) {
- 			if (objects[i].collides(charMinX, charMaxX, charMinY, 
- 					charMaxY, charMinZ, charMaxZ)) {
+			let collision = objects[i].collides(charMinX, charMaxX, charMinY, charMaxY, charMinZ, charMaxZ);
+ 			if (collision && objects[i].nomObstacle=='hurdle') {
  				return true;
  			}
+			else if(collision && objects[i].nomObstacle=='carrot'){
+				character.stamina += 2;
+				character.speed += 2;
+				character.energy += 2;
+				console.log("miam");
+			}
+			else if(collision && objects[i].nomObstacle=='bottle'){
+				character.stamina += 2;
+				character.speed += 2;
+				character.energy += 2;
+				console.log("glouglou");
+			}
  		}
  		return false;
  	}
 	
 }
 
-/** 
- *
- * IMPORTANT OBJECTS
- * 
- * The character and environmental objects in the game.
- *
- */
-
-/**
- * The player's character in the game.
- */
 function Character() {
 
 	// Explicit binding of this even in changing contexts.
@@ -402,20 +364,11 @@ function Character() {
 	this.skinColor = Colors.brown;
 	this.jumpDuration = 0.6;
 	this.jumpHeight = 2000;
-
+	this.speed = 1;
+	this.stamina = 5;
+	this.energy = 100;
 	// Initialize the character.
 	init();
-
-	/**
-	  * Builds the character in depth-first order. The parts of are 
-  	  * modelled by the following object hierarchy:
-	  *
-	  * - character (this.element)
-	  *
-	  * Also set up the starting values for evolving parameters throughout
-	  * the game.
-	  * 
-	  */
 	function init() {
 		const loader = new GLTFLoader();
 		self.runner = createGroup(0, -420, -25);/*
@@ -479,11 +432,7 @@ function Character() {
 		self.queuedActions = [];
 
 	}
-
 	
-	/**
-	 * A method called on the character when time moves forward.
-	 */
 	this.update = function() {
 
 		// Obtain the current time for future calculations.
@@ -551,37 +500,22 @@ function Character() {
 		}
 	}
 
-	/**
-	  * Handles character activity when the left key is pressed.
-	  */
 	this.onLeftKeyPressed = function() {
 		self.queuedActions.push("left");
 	}
 
-	/**
-	  * Handles character activity when the up key is pressed.
-	  */
 	this.onUpKeyPressed = function() {
 		self.queuedActions.push("up");
 	}
 
-	/**
-	  * Handles character activity when the right key is pressed.
-	  */
 	this.onRightKeyPressed = function() {
 		self.queuedActions.push("right");
 	}
 
-	/**
-	  * Handles character activity when the game is paused.
-	  */
 	this.onPause = function() {
 		self.pauseStartTime = new Date() / 1000;
 	}
 
-	/**
-	  * Handles character activity when the game is unpaused.
-	  */
 	this.onUnpause = function() {
 		var currentTime = new Date() / 1000;
 		var pauseDuration = currentTime - self.pauseStartTime;
@@ -593,14 +527,7 @@ function Character() {
 
 }
 
-
-
-
-/**
-  * A collidable tree in the game positioned at X, Y, Z in the scene and with
-  * scale S.
-  */
-function Tree(x, y, z, s) {
+function Obstacle(x, y, z) {
 
 	// Explicit binding.
 	var self = this;
@@ -609,7 +536,24 @@ function Tree(x, y, z, s) {
 	this.mesh = new THREE.Object3D();
 	const loader = new GLTFLoader();
 	self.runner = createGroup(0, 0, -25);
-	loader.load('../model/hurdle.glb', ( gltf ) => {
+	let rand = getRandomInt(1,20);
+	let word= '';
+
+	switch (rand) {
+		case 1:
+			word='carrot';
+			this.nomObstacle= 'carrot';
+			break;
+		case 2:
+			word='bottle';
+			this.nomObstacle= 'bottle';
+			break;
+		default:
+			word='hurdle';
+			this.nomObstacle= 'hurdle';
+	}
+
+	loader.load('../model/'+ word +'.glb', ( gltf ) => {
 		model = gltf.scene;
 		// model.scale.set(250,250,250);
 		self.mesh.add(model);
@@ -625,16 +569,13 @@ function Tree(x, y, z, s) {
 	
 		}
 		
-	);	
-    let upscale = 1000;
+	);
+	
+    let upscale = 500;
     this.mesh.position.set(x, y, z);
-	this.mesh.scale.set(s*upscale, s*upscale, s*upscale);
-	this.scale = s;
+	this.mesh.scale.set(upscale, upscale, upscale);
+	this.scale = 0.5;
 
-	/**
-	 * A method that detects whether this tree is colliding with the character,
-	 * which is modelled as a box bounded by the given coordinate space.
-	 */
     this.collides = function(minX, maxX, minY, maxY, minZ, maxZ) {
     	var treeMinX = self.mesh.position.x - this.scale * 250;
     	var treeMaxX = self.mesh.position.x + this.scale * 250;
@@ -649,26 +590,6 @@ function Tree(x, y, z, s) {
 
 }
 
-/** 
- *
- * UTILITY FUNCTIONS
- * 
- * Functions that simplify and minimize repeated code.
- *
- */
-
-/**
- * Utility function for generating current values of sinusoidally
- * varying variables.
- *
- * @param {number} FREQUENCY The number of oscillations per second.
- * @param {number} MINIMUM The minimum value of the sinusoid.
- * @param {number} MAXIMUM The maximum value of the sinusoid.
- * @param {number} PHASE The phase offset in degrees.
- * @param {number} TIME The time, in seconds, in the sinusoid's scope.
- * @return {number} The value of the sinusoid.
- *
- */
 function sinusoid(frequency, minimum, maximum, phase, time) {
 	var amplitude = 0.5 * (maximum - minimum);
 	var angularFrequency = 2 * Math.PI * frequency;
@@ -679,52 +600,11 @@ function sinusoid(frequency, minimum, maximum, phase, time) {
 	return average + offset;
 }
 
-/**
- * Creates an empty group of objects at a specified location.
- *
- * @param {number} X The x-coordinate of the group.
- * @param {number} Y The y-coordinate of the group.
- * @param {number} Z The z-coordinate of the group.
- * @return {Three.Group} An empty group at the specified coordinates.
- *
- */
 function createGroup(x, y, z) {
 	var group = new THREE.Group();
 	group.position.set(x, y, z);
 	return group;
 }
-
-/**
- * Creates and returns a simple box with the specified properties.
- *
- * @param {number} DX The width of the box.
- * @param {number} DY The height of the box.
- * @param {number} DZ The depth of the box.
- * @param {color} COLOR The color of the box.
- * @param {number} X The x-coordinate of the center of the box.
- * @param {number} Y The y-coordinate of the center of the box.
- * @param {number} Z The z-coordinate of the center of the box.
- * @param {boolean} NOTFLATSHADING True iff the flatShading is false.
- * @return {THREE.Mesh} A box with the specified properties.
- *
- */
-
-/**
- * Creates and returns a (possibly asymmetrical) cyinder with the 
- * specified properties.
- *
- * @param {number} RADIUSTOP The radius of the cylinder at the top.
- * @param {number} RADIUSBOTTOM The radius of the cylinder at the bottom.
- * @param {number} HEIGHT The height of the cylinder.
- * @param {number} RADIALSEGMENTS The number of segmented faces around 
- *                                the circumference of the cylinder.
- * @param {color} COLOR The color of the cylinder.
- * @param {number} X The x-coordinate of the center of the cylinder.
- * @param {number} Y The y-coordinate of the center of the cylinder.
- * @param {number} Z The z-coordinate of the center of the cylinder.
- * @return {THREE.Mesh} A box with the specified properties.
- */
-
 
 function activateAllActions() {
 /*
@@ -798,4 +678,8 @@ function animateTexture() {
     requestAnimationFrame(animateTexture);
 	if(pausePersoRoad == 1) texture.offset.y = 0;
     texture.offset.y += .008;
+}
+
+function getRandomInt(min,max){
+	return Math.trunc(Math.random() * (max - min) + min);
 }
