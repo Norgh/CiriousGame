@@ -1,6 +1,8 @@
 import * as THREE from './three.module.js';
 import {GLTFLoader} from '../loaders/GLTFLoader.js';
 
+THREE.Cache.enabled = true;
+
 let Colors = {
 	cherry: 0xe35d6a,
 	blue: 0x1560bd,
@@ -15,9 +17,8 @@ let Colors = {
 	brownDark: 0x23190f,
 	green: 0x669900,
 };
-let  pausePersoRoad = 0;
+let pausePersoRoad = 1;
 let texture, material, geome;
-let deg2Rad = Math.PI / 180;
 // Make a new world when the page is loaded.
 window.addEventListener('load', function(){
 	new World();
@@ -26,7 +27,12 @@ window.addEventListener('load', function(){
 let model, skeleton, mixer, clock;
 let idleAction, walkAction, runAction;
 let idleWeight, walkWeight, runWeight;
-let actions;
+let actions, numAnimations;
+
+let carrotModel = new THREE.Object3D();
+let bottleModel= new THREE.Object3D();
+let hurdleModel= new THREE.Object3D();
+
 function World() {
 
 	// Explicit binding of this even in changing contexts.
@@ -35,8 +41,9 @@ function World() {
 	// Scoped variables in this world.
 	var element, scene, camera, character, renderer, light,
 		objects, paused, keysAllowed, score, difficulty,
-		treePresenceProb, maxTreeSize, fogDistance, gameOver;
+		presenceProb, maxTreeSize, fogDistance, gameOver;
 		
+	
 	// Initialize the world.
 	init();
 	
@@ -78,21 +85,27 @@ function World() {
 		light = new THREE.HemisphereLight(0xffffff, 0xffffff, 1);
 		scene.add(light);
 
+		// Initialize the models.
+		initModels();
+
 		// Initialize the character and add it to the scene.
 		character = new Character();
 		character.element.rotation.y = Math.PI;
-		// character.element.position.z = 100; // à fix plus tard
+		// character.element.position.z = 100; // Ã  fix plus tard
 		scene.add(character.element);
 
 		// var ground = createBox(3000, 20, 120000, Colors.sand, 0, -400, -60000);
 		var ground = new road();
 		scene.add(ground.element);
+		
+		// Initialize models
 
 		objects = [];
-		treePresenceProb = 0.2;
+		presenceProb = 0.2;
 		maxTreeSize = 0.5;
+
 		for (var i = 10; i < 40; i++) {
-			createRowOfTrees(i * -3000, treePresenceProb);
+			create1stRowOfTrees(i * -3000, presenceProb);
 		}
 
 		// The game is paused to begin with and the game is not over.
@@ -114,6 +127,7 @@ function World() {
 					if (keysAllowed[key] === false) return;
 					keysAllowed[key] = false;
 					if (paused && !collisionMortelle() && key > 18) {
+						pausePersoRoad = 0;
 						paused = false;
 						character.onUnpause();
 						document.getElementById(
@@ -122,6 +136,7 @@ function World() {
 							"controls").style.display = "none";
 					} else {
 						if (key == p) {
+							pausePersoRoad = 1;
 							paused = true;
 							character.onPause();
 							document.getElementById(
@@ -170,7 +185,6 @@ function World() {
 	  * The main animation loop.
 	  */
 	function loop() {
-
 		// Update the game.
 		if (!paused) {
 			// Add more trees and increase the difficulty.
@@ -181,32 +195,25 @@ function World() {
 					var level = difficulty / levelLength;
 					switch (level) {
 						case 1:
-							treePresenceProb = 0.35;
-							maxTreeSize = 0.5;
+							presenceProb = 0.35;
 							break;
 						case 2:
-							treePresenceProb = 0.35;
-							maxTreeSize = 0.85;
+							presenceProb = 0.35;
 							break;
 						case 3:
-							treePresenceProb = 0.5;
-							maxTreeSize = 0.85;
+							presenceProb = 0.5;
 							break;
 						case 4:
-							treePresenceProb = 0.5;
-							maxTreeSize = 1.1;
+							presenceProb = 0.5;
 							break;
 						case 5:
-							treePresenceProb = 0.5;
-							maxTreeSize = 1.1;
+							presenceProb = 0.5;
 							break;
 						case 6:
-							treePresenceProb = 0.55;
-							maxTreeSize = 1.1;
+							presenceProb = 0.55;
 							break;
 						default:
-							treePresenceProb = 0.55;
-							maxTreeSize = 1.25;
+							presenceProb = 0.55;
 					}
 				}
 				if ((difficulty >= 5 * levelLength && difficulty < 6 * levelLength)) {
@@ -214,7 +221,7 @@ function World() {
 				} else if (difficulty >= 8 * levelLength && difficulty < 9 * levelLength) {
 					fogDistance -= (5000 / levelLength);
 				}
-				createRowOfTrees(-120000, treePresenceProb);
+				createRowOfTrees(-120000, presenceProb);
 				scene.fog.far = fogDistance;
 			}
 
@@ -232,7 +239,7 @@ function World() {
 			character.update();
 
 			// Check for collisions between the character and objects.
-			if (collisionMortelle()) {
+			if (collisionMortelle() || character.energy == 0) {
 				gameOver = true;
 				pausePersoRoad = 1;
 				paused = true;
@@ -296,9 +303,14 @@ function World() {
 			// Update the scores.
 			score += 10;
 			document.getElementById("score").innerHTML = score;
-
+			if(score % 1000 == 0){
+				character.energy -=1;
+				character.hydratation -=1;
+			}
+			if(character.hydratation < 20){
+				character.energy -=2;
+			}
 		}
-
 		// Render the page and repeat.
 		renderer.render(scene, camera);
 		requestAnimationFrame(loop);
@@ -311,6 +323,17 @@ function World() {
 		renderer.setSize(element.clientWidth, element.clientHeight);
 		camera.aspect = element.clientWidth / element.clientHeight;
 		camera.updateProjectionMatrix();
+	}
+
+	function create1stRowOfTrees(position, probability) {
+		for (var lane = -1; lane < 2; lane++) {
+			var randomNumber = Math.random();
+			if (randomNumber < probability) {
+				var obstacle = new FirstObstacles(lane * 800, -400, position);
+				objects.push(obstacle);
+				scene.add(obstacle.mesh);
+			}
+		}
 	}
 
 	function createRowOfTrees(position, probability) {
@@ -335,21 +358,18 @@ function World() {
  		for (var i = 0; i < objects.length; i++) {
 			let collision = objects[i].collides(charMinX, charMaxX, charMinY, charMaxY, charMinZ, charMaxZ);
  			if (collision && objects[i].nomObstacle=='hurdle') {
- 				return true;
+				return true;
  			}
 			else if(collision && objects[i].nomObstacle=='carrot'){
-				character.stamina += 2;
-				character.speed += 2;
-				character.energy += 2;
-				console.log("miam");
+				if(character.energy < 99) character.energy += (2/3);
 			}
 			else if(collision && objects[i].nomObstacle=='bottle'){
-				character.stamina += 2;
-				character.speed += 2;
-				character.energy += 2;
-				console.log("glouglou");
+				if(character.energy < 99) character.energy += (2/3);
+				if(character.hydratation < 99) character.hydratation += (10/3);
 			}
  		}
+		document.getElementById("energy").value = Math.round(character.energy);
+		document.getElementById("hydratation").value = Math.round(character.hydratation);
  		return false;
  	}
 	
@@ -364,17 +384,13 @@ function Character() {
 	this.skinColor = Colors.brown;
 	this.jumpDuration = 0.6;
 	this.jumpHeight = 2000;
-	this.speed = 1;
-	this.stamina = 5;
 	this.energy = 100;
+	this.hydratation = 100;
 	// Initialize the character.
 	init();
 	function init() {
 		const loader = new GLTFLoader();
-		self.runner = createGroup(0, -420, -25);/*
-		loader.load('../model/model_naruto/naruto_run_anim.glb', ( gltf ) => {
-			model = gltf.scene;
-			model.scale.set(2,2,2);*/
+		self.runner = createGroup(0, -420, -25);
 		loader.load('../model/playermodel1_no_texture.glb', ( gltf ) => {
 			model = gltf.scene;
 			model.scale.set(500,500,500);
@@ -392,14 +408,16 @@ function Character() {
 			const animations = gltf.animations;
 			console.log(animations);
 			mixer = new THREE.AnimationMixer( model );
+
+			numAnimations = animations.length;
 		/*	Pour quand on rajoutera d'autres animations
 			idleAction = mixer.clipAction( animations[ 1 ] );
 			walkAction = mixer.clipAction( animations[ 6 ] );*/
 			runAction = mixer.clipAction( animations[ 0 ] );
 
 			actions = [ runAction ];
-
-			activateAllActions();
+			// activateActions(pausePersoRoad);
+			activateActions(0);
 
 			animate();
 			},
@@ -514,11 +532,13 @@ function Character() {
 
 	this.onPause = function() {
 		self.pauseStartTime = new Date() / 1000;
+		pausePersoRoad = 1;
 	}
 
 	this.onUnpause = function() {
 		var currentTime = new Date() / 1000;
 		var pauseDuration = currentTime - self.pauseStartTime;
+		pausePersoRoad = 0;
 		self.runningStartTime += pauseDuration;
 		if (self.isJumping) {
 			self.jumpStartTime += pauseDuration;
@@ -528,6 +548,47 @@ function Character() {
 }
 
 function Obstacle(x, y, z) {
+
+	// Explicit binding.
+	var self = this;
+
+	// The object portrayed in the scene.
+	this.mesh = new THREE.Object3D();
+	let rand = getRandomInt(1,20);
+	switch (rand) {
+		case 1:
+			this.mesh.add(carrotModel.clone());
+			this.nomObstacle= 'carrot';
+			break;
+		case 2:
+			this.mesh.add(bottleModel.clone());
+			this.nomObstacle= 'bottle';
+			break;
+		default:
+			this.mesh.add(hurdleModel.clone());
+			this.nomObstacle= 'hurdle';
+	}
+	
+    let upscale = 500;
+    this.mesh.position.set(x, y, z);
+	this.mesh.scale.set(upscale, upscale, upscale);
+	this.scale = 0.5;
+
+    this.collides = function(minX, maxX, minY, maxY, minZ, maxZ) {
+    	var treeMinX = self.mesh.position.x - this.scale * 250;
+    	var treeMaxX = self.mesh.position.x + this.scale * 250;
+    	var treeMinY = self.mesh.position.y;
+    	var treeMaxY = self.mesh.position.y + this.scale * 1150;
+    	var treeMinZ = self.mesh.position.z - this.scale * 250;
+    	var treeMaxZ = self.mesh.position.z + this.scale * 250;
+    	return treeMinX <= maxX && treeMaxX >= minX
+    		&& treeMinY <= maxY && treeMaxY >= minY
+    		&& treeMinZ <= maxZ && treeMaxZ >= minZ;
+    }
+
+}
+
+function FirstObstacles(x, y, z) {
 
 	// Explicit binding.
 	var self = this;
@@ -555,7 +616,6 @@ function Obstacle(x, y, z) {
 
 	loader.load('../model/'+ word +'.glb', ( gltf ) => {
 		model = gltf.scene;
-		// model.scale.set(250,250,250);
 		self.mesh.add(model);
 		},
 		// called while loading is progressing
@@ -606,11 +666,10 @@ function createGroup(x, y, z) {
 	return group;
 }
 
-function activateAllActions() {
+function activateActions(isIdle) {
 /*
-	setWeight( idleAction, 0 );
-	setWeight( walkAction, 0 );*/
-	setWeight( runAction, 1 );
+	setWeight( idleAction, 0+isIdle );*/
+	setWeight( runAction, 1-isIdle );
 
 	actions.forEach( function ( action ) {
 
@@ -633,10 +692,6 @@ function animate() {
 	// Render loop
 
 	requestAnimationFrame( animate );
-
-	idleWeight = 0;
-	walkWeight = 0;
-	runWeight = 1;
 
 	// Get the time elapsed since the last frame, used for mixer update (if not in single step mode)
 
@@ -670,16 +725,78 @@ function road(){
 	  
 	  self.geome = new THREE.Mesh(geom, material);
 	  self.element = createGroup(0, -370, -4000);
-		self.element.add(self.geome);
+	self.element.add(self.geome);
 	}
 }
 
 function animateTexture() {
     requestAnimationFrame(animateTexture);
-	if(pausePersoRoad == 1) texture.offset.y = 0;
-    texture.offset.y += .008;
+	if(pausePersoRoad == 0){
+		texture.offset.y += .008;
+	}else{
+
+	};
+    
 }
 
 function getRandomInt(min,max){
 	return Math.trunc(Math.random() * (max - min) + min);
+}
+
+function initModels() {
+	// Initialize models
+
+	const preloader = new GLTFLoader();
+	preloader.load('../model/hurdle.glb', ( gltf ) => {
+		hurdleModel = gltf.scene;
+		
+		// model.scale.set(250,250,250);
+		//hurdleModel.add(model);
+		},
+		// called while loading is progressing
+		function ( xhr ) {
+
+		},
+		// called when loading has errors
+		function ( error ) {
+
+			console.log( 'An error happened' );
+
+		}
+		
+	);
+	preloader.load('../model/carrot.glb', ( gltf ) => {
+		carrotModel = gltf.scene;
+		// model.scale.set(250,250,250);
+		//carrotModel.add(model);
+		},
+		// called while loading is progressing
+		function ( xhr ) {
+
+		},
+		// called when loading has errors
+		function ( error ) {
+
+			console.log( 'An error happened' );
+
+		}
+		
+	);
+	preloader.load('../model/bottle.glb', ( gltf ) => {
+		bottleModel = gltf.scene;
+		// model.scale.set(250,250,250);
+		//bottleModel.add(model);
+		},
+		// called while loading is progressing
+		function ( xhr ) {
+
+		},
+		// called when loading has errors
+		function ( error ) {
+
+			console.log( 'An error happened' );
+
+		}
+		
+	);
 }
