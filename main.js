@@ -35,6 +35,9 @@ con.connect( err => {
 
 /**** Project configuration ****/
 
+const Storage = require("./front/js/modules/storage");
+const Leaderboard = require("./front/js/modules/leaderboard");
+const TableDraw = require("./front/js/modules/tableDraw");
 const jsonParser = bodyParser.json();
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
 const bcrypt = require('bcrypt');
@@ -103,7 +106,11 @@ app.get('/game', (req, res) => {
 
 app.get('/score', (req, res) => {
     if (req.session.username){
-        res.sendFile(__dirname + '/Front/Html/score.html');
+        let fileSend = fs.readFileSync(__dirname + '/Front/Html/score-header.html');
+        let data = Storage.getData("storage");
+        fileSend += TableDraw.draw(10,data.leaderboard, Leaderboard.getRankLine);
+        fileSend += fs.readFileSync(__dirname + '/Front/Html/score-footer.html');
+        res.send(fileSend);
     }
     else {
         res.redirect('/');
@@ -114,16 +121,18 @@ app.get('/rules', (req, res) => {
     res.sendFile(__dirname + '/Front/Html/rules.html');
 });
 
-app.get('/shop', (req, res) => {
-    if (req.session.username){
-        res.sendFile(__dirname + '/Front/Html/shop.html');
-    }
-    else {
-        res.redirect('/');
-    }
-});
 
 /**************************/
+
+app.post('/game', (req, res) => {
+    let cName = req.session.username;
+    let newLine = {"username" : cName, "score" : Object.keys(req.body)[0]};
+    leaderboard = Storage.getData("storage");
+    leaderboard.leaderboard = Storage.storeLB(leaderboard.leaderboard, newLine);
+    Storage.saveData("storage", leaderboard);
+});
+
+
 
 app.post('/login', body('login').isLength({min: 3}).trim().escape(), (req, res) => {
     const login = req.body.login
