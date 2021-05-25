@@ -52,7 +52,6 @@ function World() {
 	  * then begins the rendering loop.
 	  */
 	function init() {
-
 		// Locate where the world is to be located on the screen.
 		element = document.getElementById('world');
 
@@ -175,7 +174,6 @@ function World() {
 		score = 0;
 		difficulty = 0;
 		document.getElementById("score").innerHTML = score;
-
 		// Begin the rendering loop.
 		loop();
 
@@ -241,6 +239,7 @@ function World() {
 			// Check for collisions between the character and objects.
 			if (collisionMortelle() || character.energy == 0) {
 				gameOver = true;
+				let a = document.getElementById("lol").style.visibility="hidden";
 				pausePersoRoad = 1;
 				paused = true;
 				document.addEventListener(

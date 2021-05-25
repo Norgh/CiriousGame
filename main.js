@@ -88,7 +88,8 @@ app.get('/home', (req, res) => {
 
 app.get('/logout', (req, res) => {
     req.session.destroy();
-    res.redirect(__dirname + '/Front/Html/connection.html');
+    console.log('user disconnected');
+    res.redirect('/connection');
 });
 
 app.get('/game', (req, res) => {
