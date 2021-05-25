@@ -57,7 +57,7 @@ if (app.get('env') === 'production') {
     session.cookie.secure = true // serve secure cookies
 }
 
-//Server listening on port 4442
+//Server listening on port 4443
 http.listen(4443, () => {
     console.log('Server launched on port 4443');
 });
@@ -81,9 +81,14 @@ app.get('/connection', (req, res) => {
     res.sendFile(__dirname + '/Front/Html/connection.html');
 });
 
+//Redirect to connection if the url is "/connection"
+app.get('/home', (req, res) => {
+    res.sendFile(__dirname + '/Front/Html/home.html');
+});
+
 app.get('/logout', (req, res) => {
     req.session.destroy();
-    res.redirect('/');
+    res.redirect(__dirname + '/Front/Html/connection.html');
 });
 
 app.get('/game', (req, res) => {
@@ -152,6 +157,14 @@ io.on('connection', (socket) =>{
 
     socket.on('login', (info) => {
         let sql = 'SELECT id, username FROM users WHERE username = ? and password = ?';
+        con.query(sql, [info[0], info[1]], (err, res) => {
+            if(err) throw err;
+            socket.emit('resLog',res);
+        });
+    });
+
+    socket.on('scoreboard', (info) => {
+        let sql = 'SELECT pseudo, score FROM scoreboard';
         con.query(sql, [info[0], info[1]], (err, res) => {
             if(err) throw err;
             socket.emit('resLog',res);

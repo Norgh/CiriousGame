@@ -2,9 +2,9 @@
 	<head>
 		<title>Cirious Game | Skyline Runner</title>
 		<link href="https://fonts.googleapis.com/css?family=Playfair+Display:400,700" rel="stylesheet">
-        <script type="module" src="js/game.js"></script>
+    <script type="module" src="js/game.js"></script>
 		<link href="style.css" rel="stylesheet">
-        <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400" rel="stylesheet">
 	</head>
     <style>
   /* $yellow: #FFE800;
@@ -129,11 +129,12 @@ body {
 }
 
 .btn {
+  margin-top: 5%;
   top: 100;
   left: 0;
   transition: all .15s linear 0s;
   position: relative;
-  display: block;
+  display: inline-block;
   padding: 15px 25px;
   background-color: #FFE800;
   margin-right: 20px;
@@ -143,35 +144,28 @@ body {
   letter-spacing: 1px;
   box-shadow: -6px 6px 0 #404040;
   text-decoration: none;
+  cursor: pointer;
 }
 
-/* a.btn { display: block; } */
-
-a:active.btn {
-  top: 6px;
-  left: -6px;
-  box-shadow: none;
-}
-
-a:hover.btn{
+.btn:hover{
   color : white;
+  width:200px;
+  height: 80px;
 }
 
 #logo{
   height: 400px;
   width: 400px;
   position: absolute;
-  bottom: 300;
-  margin-top: 2px;
-  position: center;
+  top: 2%;
+  position: absolute;
 }
 
 #deconexion{
+  top:80%;
 	cursor : pointer;
 	height: 50px;
   position: absolute;
-  bottom: 150;
-  margin-top: 2px;
   position: center;
 }
 
@@ -193,14 +187,19 @@ a:hover.btn{
     font-weight: bold;
 }
 
-</style>
+.menu{
+  margin-left: 2%;
+}
 
+</style>
 <img id="logo" src="./images/logo.png">
 <img id="deconexion" src="../images/deco.png">
 	<body>
-        <a class="btn" href="/game" > Play </a>
-        <a class="btn" href= "/score"> ScoreBoard </a>
-        <a class="btn" href="/rules"> Rules </a>
+        <div class="menu">
+        <input type=button class="btn" onclick="window.location.href='../game'"; value="Play" />
+        <input type=button class="btn" onclick="window.location.href='../score'"; value="ScoreBoard" />
+        <input type=button class="btn" onclick="window.location.href='../rules'"; value="Rules" />
+        </div>
 
         <div id="footer">
           <p>&copy; Sénéchal Pierre - Mariage Augustin - Smets Lionel - Lecoq Judith - Dhalluin Audrey - Lavaux Charlotte - CIR 2 - 2020/2021</p>
