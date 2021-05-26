@@ -6,8 +6,20 @@
 		<link href="style.css" rel="stylesheet">
 	</head>
 	<style>
-		#lol {top:320px; transition: all .15s linear 0s; position: absolute; padding: 15px 25px; background-color: #FFE800; margin-left: 5%; margin-top: 20%;text-transform: uppercase; color: #404040; font-family: arial; letter-spacing: 1px; box-shadow: -6px 6px 0 #404040; text-decoration: none; display: flex; width: 100px;}
+		#lol {top: 45%; transition: all .15s linear 0s; position: fixed; padding: 15px 25px; background-color: #FFE800; margin-left: 5%; margin-top: 20%;text-transform: uppercase; color: #404040; font-family: arial; letter-spacing: 1px; box-shadow: -6px 6px 0 #404040; text-decoration: none; width: 100px;}		
 		#lol:hover {width:200px;}
+		@media (max-width: 1000px) {
+  			#h,#e {
+    			font-size: 1rem;
+  			}
+			#world{
+				width:100%;
+			}
+			#lol{
+				top:0%;
+				right:10px;
+			}
+		} 
 	</style>
 	<body>
 		<div class="panel">
@@ -18,8 +30,8 @@
 			<div class="stat">
 				<label>Score</label>
 				<p id="score">0</p>
-				<p>Energie :<progress id="energy" value="100" max="100"></progress></p>
-				<p>Hydratation :<progress id="hydratation" value="100" max="100"></progress></p>
+				<p id="e">Energie :<progress id="energy" value="100" max="100"></progress></p>
+				<p id="h">Hydratation :<progress id="hydratation" value="100" max="100"></progress></p>
 			</div>
 			<table id="controls">
 			  	<tr>

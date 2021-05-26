@@ -12,13 +12,14 @@ window.addEventListener('load', function(){
 });
 
 // Variables used for the character
-let model, skeleton, mixerRun, mixerIdle, clock, idleAction, walkAction, runAction, idleWeight, walkWeight, runWeight, actionIdle, actionRun,numAnimations;
+let model, skeleton, mixerRun, mixerIdle, clock, idleAction, runAction, idleWeight, walkWeight, runWeight, actions,numAnimations;
 
 // Loading the obstacles
 let carrotModel = new THREE.Object3D(); 
 let bottleModel= new THREE.Object3D();
 let cigarettesModel= new THREE.Object3D();
 let hurdleModel= new THREE.Object3D();
+let wineModel = new THREE.Object3D();
 
 // The main function, managing the whole game
 function World() {
@@ -162,7 +163,6 @@ function World() {
 	// The main loop
 	function loop() {
 		// Update the game.
-		character.updateAnimation();
 		if (!paused) {
 			// Add more obstacles and increase the difficulty.
 			if ((objects[objects.length - 1].mesh.position.z) % 3000 == 0) {
@@ -213,8 +213,8 @@ function World() {
 			});
 
 			// Makes the character move according to the controls.
-			
 			character.update();
+			
 
 			// Check for a collision between the character and an object, or if the energy is too low to keep running.
 			if (collisionMortelle() || character.energy <= 0) {
@@ -294,6 +294,9 @@ function World() {
 				character.energy -=2;
 			}
 		}
+		if(score>0){
+			character.changeAnimation();
+		}
 		// Render the page and repeat.
 		renderer.render(scene, camera);
 		requestAnimationFrame(loop);
@@ -347,16 +350,20 @@ function World() {
  			}
 			else if(collision && objects[i].nomObstacle=='carrot'){
 				objects[i].mesh.position.z=100; //removing it to the map, as if it was 'eaten' by the player
-				if(character.energy < 99) character.energy += (2/3); // carrots are healthy, u won some extra energy
+				if(character.energy < 99) character.energy += 2; // carrots are healthy, u won some extra energy
 			}
 			else if(collision && objects[i].nomObstacle=='bottle'){
 				objects[i].mesh.position.z=100; //removing it to the map, as if it was 'eaten' by the player
-				if(character.energy < 99) character.energy += (2/3); // Water is important, it hydrates your body, you get more energy
-				if(character.hydratation < 99) character.hydratation += (10/3); // Water is important, it hydrates your body, you are more hydrated
+				if(character.energy < 99) character.energy += 2; // Water is important, it hydrates your body, you get more energy
+				if(character.hydratation < 99) character.hydratation += 10; // Water is important, it hydrates your body, you are more hydrated
 			}
 			else if(collision && objects[i].nomObstacle=='cigarettes'){
 				objects[i].mesh.position.z=100; //removing it to the map, as if it was 'eaten' by the player
-                if(character.energy > 5) character.energy -= (5/3); // Cigarettes are bad, u lost energy, next time try to avoid them
+                if(character.energy > 5) character.energy -= 5; // Cigarettes are bad, u lost energy, next time try to avoid them
+            }
+			else if(collision && objects[i].nomObstacle=='wine'){
+				objects[i].mesh.position.z=100; //removing it to the map, as if it was 'eaten' by the player
+                if(character.hydratation > 5) character.hydratation -= 8; // wine is bad, u lost energy, next time try to avoid them
             }
  		}
 		document.getElementById("energy").value = Math.round(character.energy);
@@ -385,45 +392,8 @@ function Character() {
 	init();
 	function init() {
 		const loader = new GLTFLoader(); // Calling the loader
-		self.idle = createGroup(0, -420, -25);
-		loader.load('../model/perso_idle.glb', ( gltf ) => {
-			model = gltf.scene;
-			model.scale.set(500,500,500);
-			self.idle.add(model);
-			model.traverse( function ( object ) {
-				if ( object.isMesh ) object.castShadow = true;
-			} );
-
-			skeleton = new THREE.SkeletonHelper( model );
-			skeleton.visible = false;
-			self.idle.add( skeleton );
-
-			const animations = gltf.animations;
-			mixerIdle = new THREE.AnimationMixer( model );
-
-			numAnimations = animations.length;
-			idleAction = mixerIdle.clipAction( animations[ 0 ] );
-
-			actionIdle = [ idleAction ];
-			// activateActions(pausePersoRoad);
-			activateActionIdle(0);
-
-			},
-			// called while loading is progressing
-			function ( xhr ) {
-		
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
-			},
-			// called when loading has errors
-			function ( error ) {
-		
-				console.log( 'An error happened' );
-		
-			}
-			
-		);
-		self.runner = createGroup(0, -10420, -25);
-		loader.load('../model/perso_run.glb', ( gltf ) => {
+		self.runner = createGroup(0, -390, -25);
+		loader.load('../model/untitled.glb', ( gltf ) => {
 			model = gltf.scene;
 			model.scale.set(500,500,500);
 			self.runner.add(model);
@@ -440,16 +410,16 @@ function Character() {
 
 			numAnimations = animations.length;
 			runAction = mixerRun.clipAction( animations[ 0 ] );
+			idleAction = mixerRun.clipAction( animations[ 1 ] );
 
-			actionRun = [ runAction ];
-			activateActionRun();
+			actions = [ runAction, idleAction];
+			activateAction();
 
 			animate();
 			},
 			// called while loading is progressing
 			function ( xhr ) {
 		
-				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
 			},
 			// called when loading has errors
 			function ( error ) {
@@ -463,7 +433,6 @@ function Character() {
 		// Build the character.
 		self.element = createGroup(0, 0, -4000);
 		self.element.add(self.runner);
-		self.element.add(self.idle);
 
 		// Initialize the player's changing parameters.
 		self.isJumping = false;
@@ -476,17 +445,15 @@ function Character() {
 		self.queuedActions = [];
 
 	}
-	
-	this.updateAnimation = function(){
-		if(pausePersoRoad === 0){
-			self.runner.position.y = -390;
-			self.idle.position.y = -10420;
-		}
 
-		if(pausePersoRoad === 1){
-			self.runner.position.y = -10420;
-			self.idle.position.y = -390;
-		} 
+	this.changeAnimation = function() {
+		actions[0].enabled = 1 - pausePersoRoad;
+		actions[1].enabled =  pausePersoRoad;
+		if(pausePersoRoad == 0){
+			self.element.rotation.y = - Math.PI/1.35;
+		}else{
+			self.element.rotation.y =  Math.PI;
+		}
 	}
 
 	// Update the character after every loop
@@ -608,6 +575,10 @@ function Obstacle(x, y, z) {
 			this.mesh.add(cigarettesModel.clone()); // Cigarettes ?
 			this.nomObstacle= 'cigarettes';
 			break;
+		case 4:
+			this.mesh.add(wineModel.clone()); // Wine ?
+			this.nomObstacle= 'wine';
+			break;
 		default:
 			this.mesh.add(hurdleModel.clone()); // Or just a hurdle?
 			this.nomObstacle= 'hurdle';
@@ -654,10 +625,13 @@ function FirstObstacles(x, y, z) {
 			word='bottle';
 			this.nomObstacle= 'bottle';
 			break;
-
 		case 3:
 			word='cigarettes';
 			this.nomObstacle= 'cigarettes';
+			break;
+		case 4:
+			word='wine';
+			this.nomObstacle= 'wine';
 			break;
 		default:
 			word='hurdle';
@@ -719,25 +693,15 @@ function createGroup(x, y, z) {
 }
 
 // Used for the animation of the character : running or idle
-function activateActionIdle() {
-
-	actionIdle.forEach( function ( actionIdle ) {
-
-		actionIdle.play();
-
+function activateAction() {
+	actions[0].enabled = 1 - pausePersoRoad;
+	actions[1].enabled =  pausePersoRoad;
+	actions.forEach( function ( actions ) {
+		actions.play();
 	} );
 
 }
 
-function activateActionRun() {
-
-	actionRun.forEach( function ( actionRun ) {
-
-		actionRun.play();
-
-	} );
-
-}
 
 // Animate the character in loop mode
 function animate() {
@@ -750,8 +714,9 @@ function animate() {
 
 	// Update the animation mixer, the stats panel, and render this frame
 	mixerRun.update( mixerUpdateDelta );
-	mixerIdle.update( mixerUpdateDelta );
 }
+
+
 
 // Creating the ground, a picture called in loop, repeating itself
 function road(){
@@ -845,6 +810,19 @@ function initModels() {
 
 	preloader.load('../model/cigarettes.glb', ( gltf ) => {
 		cigarettesModel = gltf.scene;
+		},
+		// called while loading is progressing
+		function ( xhr ) {
+		},
+		// called when loading has errors
+		function ( error ) {
+			console.log( 'An error happened' );
+		}
+		
+	);
+
+	preloader.load('../model/wine.glb', ( gltf ) => {
+		wineModel = gltf.scene;
 		},
 		// called while loading is progressing
 		function ( xhr ) {
