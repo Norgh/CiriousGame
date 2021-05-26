@@ -12,7 +12,7 @@ window.addEventListener('load', function(){
 });
 
 // Variables used for the character
-let model, skeleton, mixer, clock, idleAction, walkAction, runAction, idleWeight, walkWeight, runWeight, actions, numAnimations;
+let model, skeleton, mixerRun, mixerIdle, clock, idleAction, walkAction, runAction, idleWeight, walkWeight, runWeight, actionIdle, actionRun,numAnimations;
 
 // Loading the obstacles
 let carrotModel = new THREE.Object3D(); 
@@ -162,6 +162,7 @@ function World() {
 	// The main loop
 	function loop() {
 		// Update the game.
+		character.updateAnimation();
 		if (!paused) {
 			// Add more obstacles and increase the difficulty.
 			if ((objects[objects.length - 1].mesh.position.z) % 3000 == 0) {
@@ -212,6 +213,7 @@ function World() {
 			});
 
 			// Makes the character move according to the controls.
+			
 			character.update();
 
 			// Check for a collision between the character and an object, or if the energy is too low to keep running.
@@ -383,8 +385,45 @@ function Character() {
 	init();
 	function init() {
 		const loader = new GLTFLoader(); // Calling the loader
-		self.runner = createGroup(0, -420, -25);
-		loader.load('../model/perso.glb', ( gltf ) => {
+		self.idle = createGroup(0, -420, -25);
+		loader.load('../model/perso_idle.glb', ( gltf ) => {
+			model = gltf.scene;
+			model.scale.set(500,500,500);
+			self.idle.add(model);
+			model.traverse( function ( object ) {
+				if ( object.isMesh ) object.castShadow = true;
+			} );
+
+			skeleton = new THREE.SkeletonHelper( model );
+			skeleton.visible = false;
+			self.idle.add( skeleton );
+
+			const animations = gltf.animations;
+			mixerIdle = new THREE.AnimationMixer( model );
+
+			numAnimations = animations.length;
+			idleAction = mixerIdle.clipAction( animations[ 0 ] );
+
+			actionIdle = [ idleAction ];
+			// activateActions(pausePersoRoad);
+			activateActionIdle(0);
+
+			},
+			// called while loading is progressing
+			function ( xhr ) {
+		
+				console.log( ( xhr.loaded / xhr.total * 100 ) + '% loaded' );
+			},
+			// called when loading has errors
+			function ( error ) {
+		
+				console.log( 'An error happened' );
+		
+			}
+			
+		);
+		self.runner = createGroup(0, -10420, -25);
+		loader.load('../model/perso_run.glb', ( gltf ) => {
 			model = gltf.scene;
 			model.scale.set(500,500,500);
 			self.runner.add(model);
@@ -397,15 +436,13 @@ function Character() {
 			self.runner.add( skeleton );
 
 			const animations = gltf.animations;
-			console.log(animations);
-			mixer = new THREE.AnimationMixer( model );
+			mixerRun = new THREE.AnimationMixer( model );
 
 			numAnimations = animations.length;
-			runAction = mixer.clipAction( animations[ 0 ] );
+			runAction = mixerRun.clipAction( animations[ 0 ] );
 
-			actions = [ runAction ];
-			// activateActions(pausePersoRoad);
-			activateActions(0);
+			actionRun = [ runAction ];
+			activateActionRun();
 
 			animate();
 			},
@@ -426,6 +463,7 @@ function Character() {
 		// Build the character.
 		self.element = createGroup(0, 0, -4000);
 		self.element.add(self.runner);
+		self.element.add(self.idle);
 
 		// Initialize the player's changing parameters.
 		self.isJumping = false;
@@ -439,12 +477,24 @@ function Character() {
 
 	}
 	
+	this.updateAnimation = function(){
+		if(pausePersoRoad === 0){
+			self.runner.position.y = -390;
+			self.idle.position.y = -10420;
+		}
+
+		if(pausePersoRoad === 1){
+			self.runner.position.y = -10420;
+			self.idle.position.y = -390;
+		} 
+	}
+
 	// Update the character after every loop
 	this.update = function() {
 
 		// Obtain the current time for future calculations.
 		let currentTime = new Date() / 1000;
-
+ 
 		// Apply actions to the character if none is currently being carried out.
 		if (!self.isJumping &&
 			!self.isSwitchingLeft &&
@@ -669,24 +719,23 @@ function createGroup(x, y, z) {
 }
 
 // Used for the animation of the character : running or idle
-function activateActions(isIdle) {
+function activateActionIdle() {
 
-	setWeight( runAction, 1-isIdle );
+	actionIdle.forEach( function ( actionIdle ) {
 
-	actions.forEach( function ( action ) {
-
-		action.play();
+		actionIdle.play();
 
 	} );
 
 }
 
-// Set the weight
-function setWeight( action, weight ) {
+function activateActionRun() {
 
-	action.enabled = true;
-	action.setEffectiveTimeScale( 1 );
-	action.setEffectiveWeight( weight );
+	actionRun.forEach( function ( actionRun ) {
+
+		actionRun.play();
+
+	} );
 
 }
 
@@ -700,7 +749,8 @@ function animate() {
 	let mixerUpdateDelta = clock.getDelta();
 
 	// Update the animation mixer, the stats panel, and render this frame
-	mixer.update( mixerUpdateDelta );
+	mixerRun.update( mixerUpdateDelta );
+	mixerIdle.update( mixerUpdateDelta );
 }
 
 // Creating the ground, a picture called in loop, repeating itself
