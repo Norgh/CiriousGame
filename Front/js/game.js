@@ -393,7 +393,7 @@ function Character() {
 	function init() {
 		const loader = new GLTFLoader(); // Calling the loader
 		self.runner = createGroup(0, -390, -25);
-		loader.load('../model/untitled.glb', ( gltf ) => {
+		loader.load('../model/perso.glb', ( gltf ) => {
 			model = gltf.scene;
 			model.scale.set(500,500,500);
 			self.runner.add(model);
