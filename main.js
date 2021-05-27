@@ -113,7 +113,7 @@ app.get('/score', (req, res) => {
         res.send(fileSend);
     }
     else {
-        res.redirect('/');
+        res.redirect('/connection');
     }
 });
 

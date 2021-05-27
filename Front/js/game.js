@@ -12,7 +12,7 @@ window.addEventListener('load', function(){
 });
 
 // Variables used for the character
-let model, skeleton, mixerRun, mixerIdle, clock, idleAction, runAction, idleWeight, walkWeight, runWeight, actions,numAnimations;
+let model, skeleton, mixerRun, clock, idleAction, runAction, actions,numAnimations, modelisLoaded;
 
 // Loading the obstacles
 let carrotModel = new THREE.Object3D(); 
@@ -294,12 +294,13 @@ function World() {
 				character.energy -=2;
 			}
 		}
-		if(score>0){
-			character.changeAnimation();
-		}
+		
 		// Render the page and repeat.
 		renderer.render(scene, camera);
 		requestAnimationFrame(loop);
+		if(score>0 && modelisLoaded == 1){
+			character.changeAnimation();
+		}
 	}
 
 	// If the window is resized this function is called, to handle the new size
@@ -419,7 +420,7 @@ function Character() {
 			},
 			// called while loading is progressing
 			function ( xhr ) {
-		
+				modelisLoaded = xhr.loaded / xhr.total;
 			},
 			// called when loading has errors
 			function ( error ) {
@@ -447,13 +448,13 @@ function Character() {
 	}
 
 	this.changeAnimation = function() {
-		actions[0].enabled = 1 - pausePersoRoad;
-		actions[1].enabled =  pausePersoRoad;
 		if(pausePersoRoad == 0){
 			self.element.rotation.y = - Math.PI/1.35;
 		}else{
 			self.element.rotation.y =  Math.PI;
 		}
+		actions[0].enabled = 1 - pausePersoRoad;
+		actions[1].enabled =  pausePersoRoad;
 	}
 
 	// Update the character after every loop
